@@ -1,0 +1,6 @@
+- farm/life sim
+- co-op story
+- 3rd person
+- Initially configured as couch co-op
+  - potentially add later support for local co-op
+- Controller based control scheme
