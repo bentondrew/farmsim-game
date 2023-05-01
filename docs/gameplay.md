@@ -14,5 +14,7 @@ Ideas for professions:
 - Farmer
 - Blacksmith
 - Rancher
+- Baker
+- Alchemist/ medicines etc
 
 The game has something like a resource gathering, crafting, production game loop. 
