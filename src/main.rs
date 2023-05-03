@@ -1,4 +1,4 @@
-use bevy::{app::App, prelude::{Component, Commands, ResMut, Assets, Mesh, StandardMaterial, Bundle, PbrBundle, shape, Color, default, PointLightBundle, PointLight, Transform, Camera3dBundle, Vec3}, DefaultPlugins};
+use bevy::{app::App, prelude::{Component, Commands, ResMut, Assets, Mesh, StandardMaterial, Bundle, PbrBundle, shape, Color, default, PointLightBundle, PointLight, Transform, Camera3dBundle, Vec3, DefaultPlugins, PluginGroup}, window::{WindowPlugin, Window}};
 
 #[derive(Component)]
 struct Person;
@@ -80,7 +80,13 @@ fn add_camera(mut commands: Commands) {
 
 fn main() {
     App::new()
-    .add_plugins(DefaultPlugins)
+    .add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            title: "Farmsim Game".into(),
+            ..default()
+        }),
+        ..default()
+    }))
     .add_startup_system(add_player)
     .add_startup_system(add_ground_plane)
     .add_startup_system(add_light)
