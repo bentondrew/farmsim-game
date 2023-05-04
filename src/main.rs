@@ -101,7 +101,27 @@ fn add_camera(mut commands: Commands) {
     });
 }
 
-
+fn gamepad_events(
+    mut connection_events: EventReader<GamepadConnectionEvent>,
+    mut axis_events: EventReader<GamepadAxisChangedEvent>,
+    mut button_events: EventReader<GamepadButtonChangedEvent>,
+) {
+    for connection_event in connection_events.iter() {
+        info!("{:?}", connection_event);
+    }
+    for axis_event in axis_events.iter() {
+        info!(
+            "{:?} of {:?} is changed to {}",
+            axis_event.axis_type, axis_event.gamepad, axis_event.value
+        );
+    }
+    for button_event in button_events.iter() {
+        info!(
+            "{:?} of {:?} is changed to {}",
+            button_event.button_type, button_event.gamepad, button_event.value
+        );
+    }
+}
 
 fn main() {
     App::new()
@@ -116,5 +136,6 @@ fn main() {
     .add_startup_system(add_ground_plane)
     .add_startup_system(add_light)
     .add_startup_system(add_camera)
+    .add_system(gamepad_events)
     .run();
 }
