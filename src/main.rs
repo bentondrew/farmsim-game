@@ -1,4 +1,27 @@
-use bevy::{app::App, prelude::{Component, Commands, ResMut, Assets, Mesh, StandardMaterial, Bundle, PbrBundle, shape, Color, default, PointLightBundle, PointLight, Transform, Camera3dBundle, Vec3, DefaultPlugins, PluginGroup}, window::{WindowPlugin, Window}};
+use bevy::{
+    app::App,
+    prelude::{
+        Component,
+        Commands,
+        ResMut,
+        Assets,
+        Mesh,
+        StandardMaterial,
+        Bundle,
+        PbrBundle,
+        shape,
+        Color,
+        default,
+        PointLightBundle,
+        PointLight,
+        Transform,
+        Camera3dBundle,
+        Vec3,
+        DefaultPlugins,
+        PluginGroup, EventReader, info
+    },
+    window::{WindowPlugin, Window}, input::gamepad::{GamepadConnectionEvent, GamepadAxisChangedEvent, GamepadButtonChangedEvent}
+};
 
 #[derive(Component)]
 struct Person;
@@ -53,7 +76,7 @@ fn add_light(
                 shadows_enabled: true,
                 ..default()
             },
-            transform: Transform::from_xyz(50., 50., 50.0),
+            transform: Transform::from_xyz(50., 50., 50.),
             ..default()
         }
     );
@@ -73,10 +96,12 @@ fn add_ground_plane(
 
 fn add_camera(mut commands: Commands) {
     commands.spawn(Camera3dBundle{
-        transform: Transform::from_xyz(0., 6., 12.).looking_at(Vec3::new(0., 1., 0.), Vec3::Y),
+        transform: Transform::from_xyz(-25., 6., 0.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
         ..default()
     });
 }
+
+
 
 fn main() {
     App::new()
