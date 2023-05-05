@@ -18,9 +18,21 @@ use bevy::{
         Camera3dBundle,
         Vec3,
         DefaultPlugins,
-        PluginGroup, EventReader, info
+        PluginGroup, 
+        EventReader,
+        info,
+        Query,
+        Entity,
+        With,
+        Without
     },
-    window::{WindowPlugin, Window}, input::gamepad::{GamepadConnectionEvent, GamepadAxisChangedEvent, GamepadButtonChangedEvent}
+    window::{WindowPlugin, Window},
+    input::gamepad::{
+        GamepadConnectionEvent,
+        // GamepadAxisChangedEvent,
+        // GamepadButtonChangedEvent
+    },
+    input::gamepad::GamepadConnection::{Connected, Disconnected}
 };
 
 #[derive(Component)]
@@ -29,9 +41,21 @@ struct Person;
 #[derive(Component)]
 struct Name(String);
 
+#[derive(Component)]
+struct PlayerCharacter;
+
+#[derive(Component)]
+struct Controller {
+    gamepad_id: usize,
+}
+
+// #[derive(Component)]
+// struct NonPlayerCharacter;
+
 #[derive(Bundle)]
 struct PlayerInitBundle {
     being: Person,
+    character_type: PlayerCharacter,
     name: Name,
     renderer_representation: PbrBundle,
 }
@@ -43,6 +67,7 @@ fn add_player(
 ) {
     let bundle = PlayerInitBundle {
         being: Person,
+        character_type: PlayerCharacter,
         name: Name("Player1".to_string()),
         renderer_representation: PbrBundle {
             mesh: meshes.add(
@@ -101,27 +126,69 @@ fn add_camera(mut commands: Commands) {
     });
 }
 
-fn gamepad_events(
+fn gamepad_connection_events (
+    mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
-    mut axis_events: EventReader<GamepadAxisChangedEvent>,
-    mut button_events: EventReader<GamepadButtonChangedEvent>,
+    players_with_controllers: Query<(Entity, &Name, &Controller), (With<PlayerCharacter>, With<Controller>)>,
+    players_without_controllers: Query<(Entity, &Name), (With<PlayerCharacter>, Without<Controller>)>,
 ) {
     for connection_event in connection_events.iter() {
-        info!("{:?}", connection_event);
-    }
-    for axis_event in axis_events.iter() {
-        info!(
-            "{:?} of {:?} is changed to {}",
-            axis_event.axis_type, axis_event.gamepad, axis_event.value
-        );
-    }
-    for button_event in button_events.iter() {
-        info!(
-            "{:?} of {:?} is changed to {}",
-            button_event.button_type, button_event.gamepad, button_event.value
-        );
+        match &connection_event.connection {
+            Connected(gamepad_info) => {
+                for (player_entity, player_name) in &players_without_controllers {
+                    // Add the connected controller to the first entity in the array
+                    // then exit.
+                    commands.entity(player_entity).insert(
+                        Controller{gamepad_id: connection_event.gamepad.id}
+                    );
+                    info!(
+                        "Gamepad {} of id {} assigned to player {}",
+                        gamepad_info.name, connection_event.gamepad.id, player_name.0
+                    );
+                    break;
+                }
+            }
+            Disconnected => {
+                for (player_entity, player_name, controller) in &players_with_controllers {
+                    // Find the first entity with a controlled with a gamepad id
+                    // matching the gamepad id from the event, then remove the
+                    // controller from that entity.
+                    if controller.gamepad_id == connection_event.gamepad.id {
+                        commands.entity(player_entity).remove::<Controller>();
+                        info!(
+                            "Controller with gamepad of id {} removed from player {}",
+                            connection_event.gamepad.id, player_name.0
+                        );
+
+                    }
+                    break;
+                }
+            }
+        }
     }
 }
+
+// fn gamepad_events(
+//     mut connection_events: EventReader<GamepadConnectionEvent>,
+//     // mut axis_events: EventReader<GamepadAxisChangedEvent>,
+//     // mut button_events: EventReader<GamepadButtonChangedEvent>,
+// ) {
+//     for connection_event in connection_events.iter() {
+//         info!("{:?}", connection_event);
+//     }
+//     // for axis_event in axis_events.iter() {
+//     //     info!(
+//     //         "{:?} of {:?} is changed to {}",
+//     //         axis_event.axis_type, axis_event.gamepad, axis_event.value
+//     //     );
+//     // }
+//     // for button_event in button_events.iter() {
+//     //     info!(
+//     //         "{:?} of {:?} is changed to {}",
+//     //         button_event.button_type, button_event.gamepad, button_event.value
+//     //     );
+//     // }
+// }
 
 fn main() {
     App::new()
@@ -136,6 +203,6 @@ fn main() {
     .add_startup_system(add_ground_plane)
     .add_startup_system(add_light)
     .add_startup_system(add_camera)
-    .add_system(gamepad_events)
+    .add_system(gamepad_connection_events)
     .run();
 }
