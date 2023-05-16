@@ -133,6 +133,9 @@ fn connect_controller_to_player(
     players_without_controllers: &Query<(Entity, &Name), (With<PlayerCharacter>, Without<Controller>)>,
 ) {
     // For the first player entity in the query, add the connected controller.
+    // This also works on startup as the gamepad resources are added after
+    // creating a player and the gamepad connection events are caught for gamepads that
+    // are already on when the game is started.
     for (player_entity, player_name) in players_without_controllers {
         commands.entity(player_entity).insert(
             Controller{gamepad_id: connection_event.gamepad.id}
