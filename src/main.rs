@@ -32,7 +32,11 @@ use bevy::{
         // GamepadAxisChangedEvent,
         // GamepadButtonChangedEvent
     },
-    input::gamepad::{GamepadConnection::{Connected, Disconnected}, GamepadInfo}
+    input::gamepad::{
+        GamepadConnection::{Connected, Disconnected},
+        GamepadInfo,
+        GamepadAxisChangedEvent
+    }
 };
 
 #[derive(Component)]
@@ -191,6 +195,15 @@ fn gamepad_connection_events (
     }
 }
 
+fn gamepad_axis_changed_events(mut axis_events: EventReader<GamepadAxisChangedEvent>,) {
+    for axis_event in axis_events.iter() {
+        info!(
+            "{:?} of {:?} is changed to {}",
+            axis_event.axis_type, axis_event.gamepad, axis_event.value,
+        );
+    }
+}
+
 // fn gamepad_events(
 //     mut connection_events: EventReader<GamepadConnectionEvent>,
 //     // mut axis_events: EventReader<GamepadAxisChangedEvent>,
@@ -227,5 +240,6 @@ fn main() {
     .add_startup_system(add_light)
     .add_startup_system(add_camera)
     .add_system(gamepad_connection_events)
+    .add_system(gamepad_axis_changed_events)
     .run();
 }
