@@ -112,7 +112,7 @@ fn connect_controller_to_player(
     // This also works on startup as the gamepad resources are added after
     // creating a player and the gamepad connection events are caught for gamepads that
     // are already on when the game is started.
-    for (player_entity, player_name) in players_without_controllers {
+    if let Some((player_entity, player_name)) = players_without_controllers.into_iter().next() {
         commands.entity(player_entity).insert(Controller {
             gamepad_id: connection_event.gamepad.id,
         });
@@ -120,7 +120,6 @@ fn connect_controller_to_player(
             "Gamepad {} of id {} assigned to player {}",
             gamepad_info.name, connection_event.gamepad.id, player_name.0
         );
-        break;
     }
 }
 
@@ -142,8 +141,8 @@ fn disconnect_controller_from_player(
                 "Controller with gamepad of id {} removed from player {}",
                 connection_event.gamepad.id, player_name.0
             );
+            break;
         }
-        break;
     }
 }
 
