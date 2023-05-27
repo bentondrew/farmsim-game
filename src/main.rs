@@ -1,42 +1,17 @@
 use bevy::{
     app::App,
-    prelude::{
-        Component,
-        Commands,
-        ResMut,
-        Assets,
-        Mesh,
-        StandardMaterial,
-        Bundle,
-        PbrBundle,
-        shape,
-        Color,
-        default,
-        PointLightBundle,
-        PointLight,
-        Transform,
-        Camera3dBundle,
-        Vec3,
-        DefaultPlugins,
-        PluginGroup, 
-        EventReader,
-        info,
-        Query,
-        Entity,
-        With,
-        Without
-    },
-    window::{WindowPlugin, Window},
+    input::gamepad::GamepadConnectionEvent,
     input::gamepad::{
-        GamepadConnectionEvent,
-        // GamepadAxisChangedEvent,
-        // GamepadButtonChangedEvent
-    },
-    input::gamepad::{
+        GamepadAxisChangedEvent,
         GamepadConnection::{Connected, Disconnected},
         GamepadInfo,
-        GamepadAxisChangedEvent
-    }
+    },
+    prelude::{
+        default, info, shape, Assets, Bundle, Camera3dBundle, Color, Commands, Component,
+        DefaultPlugins, Entity, EventReader, Mesh, PbrBundle, PluginGroup, PointLight,
+        PointLightBundle, Query, ResMut, StandardMaterial, Transform, Vec3, With, Without,
+    },
+    window::{Window, WindowPlugin},
 };
 
 #[derive(Component)]
@@ -81,34 +56,28 @@ fn add_player(
                 })
                 .unwrap(),
             ),
-            material: materials.add(
-                StandardMaterial {
-                    base_color: Color::hex("#71daff").unwrap(),
-                    ..default()
-                }
-            ),
+            material: materials.add(StandardMaterial {
+                base_color: Color::hex("#71daff").unwrap(),
+                ..default()
+            }),
             transform: Transform::from_xyz(0., 1., 0.),
             ..default()
-        }
+        },
     };
     commands.spawn(bundle);
 }
 
-fn add_light(
-    mut commands: Commands,
-) {
-    commands.spawn(
-        PointLightBundle {
-            point_light: PointLight {
-                intensity: 600000.,
-                range: 100.,
-                shadows_enabled: true,
-                ..default()
-            },
-            transform: Transform::from_xyz(50., 50., 50.),
+fn add_light(mut commands: Commands) {
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 600000.,
+            range: 100.,
+            shadows_enabled: true,
             ..default()
-        }
-    );
+        },
+        transform: Transform::from_xyz(50., 50., 50.),
+        ..default()
+    });
 }
 
 fn add_ground_plane(
@@ -124,7 +93,7 @@ fn add_ground_plane(
 }
 
 fn add_camera(mut commands: Commands) {
-    commands.spawn(Camera3dBundle{
+    commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(-25., 6., 0.).looking_at(Vec3::new(0., 0., 0.), Vec3::Y),
         ..default()
     });
@@ -134,16 +103,19 @@ fn connect_controller_to_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
     gamepad_info: &GamepadInfo,
-    players_without_controllers: &Query<(Entity, &Name), (With<PlayerCharacter>, Without<Controller>)>,
+    players_without_controllers: &Query<
+        (Entity, &Name),
+        (With<PlayerCharacter>, Without<Controller>),
+    >,
 ) {
     // For the first player entity in the query, add the connected controller.
     // This also works on startup as the gamepad resources are added after
     // creating a player and the gamepad connection events are caught for gamepads that
     // are already on when the game is started.
     for (player_entity, player_name) in players_without_controllers {
-        commands.entity(player_entity).insert(
-            Controller{gamepad_id: connection_event.gamepad.id}
-        );
+        commands.entity(player_entity).insert(Controller {
+            gamepad_id: connection_event.gamepad.id,
+        });
         info!(
             "Gamepad {} of id {} assigned to player {}",
             gamepad_info.name, connection_event.gamepad.id, player_name.0
@@ -155,7 +127,10 @@ fn connect_controller_to_player(
 fn disconnect_controller_from_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
-    players_with_controllers: &Query<(Entity, &Name, &Controller), (With<PlayerCharacter>, With<Controller>)>,
+    players_with_controllers: &Query<
+        (Entity, &Name, &Controller),
+        (With<PlayerCharacter>, With<Controller>),
+    >,
 ) {
     // Find the first entity with a controlled with a gamepad id
     // matching the gamepad id from the event, then remove the
@@ -172,30 +147,36 @@ fn disconnect_controller_from_player(
     }
 }
 
-fn gamepad_connection_events (
+fn gamepad_connection_events(
     mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
-    players_with_controllers: Query<(Entity, &Name, &Controller), (With<PlayerCharacter>, With<Controller>)>,
-    players_without_controllers: Query<(Entity, &Name), (With<PlayerCharacter>, Without<Controller>)>,
+    players_with_controllers: Query<
+        (Entity, &Name, &Controller),
+        (With<PlayerCharacter>, With<Controller>),
+    >,
+    players_without_controllers: Query<
+        (Entity, &Name),
+        (With<PlayerCharacter>, Without<Controller>),
+    >,
 ) {
     for connection_event in connection_events.iter() {
         match &connection_event.connection {
             Connected(gamepad_info) => connect_controller_to_player(
-                    &mut commands,
-                    connection_event,
-                    gamepad_info,
-                    &players_without_controllers,
-                ),
+                &mut commands,
+                connection_event,
+                gamepad_info,
+                &players_without_controllers,
+            ),
             Disconnected => disconnect_controller_from_player(
-                    &mut commands,
-                    connection_event, 
-                    &players_with_controllers
-                ),
+                &mut commands,
+                connection_event,
+                &players_with_controllers,
+            ),
         }
     }
 }
 
-fn gamepad_axis_changed_events(mut axis_events: EventReader<GamepadAxisChangedEvent>,) {
+fn gamepad_axis_changed_events(mut axis_events: EventReader<GamepadAxisChangedEvent>) {
     for axis_event in axis_events.iter() {
         info!(
             "{:?} of {:?} is changed to {}",
@@ -228,18 +209,18 @@ fn gamepad_axis_changed_events(mut axis_events: EventReader<GamepadAxisChangedEv
 
 fn main() {
     App::new()
-    .add_plugins(DefaultPlugins.set(WindowPlugin {
-        primary_window: Some(Window {
-            title: "Farmsim Game".into(),
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "Farmsim Game".into(),
+                ..default()
+            }),
             ..default()
-        }),
-        ..default()
-    }))
-    .add_startup_system(add_player)
-    .add_startup_system(add_ground_plane)
-    .add_startup_system(add_light)
-    .add_startup_system(add_camera)
-    .add_system(gamepad_connection_events)
-    .add_system(gamepad_axis_changed_events)
-    .run();
+        }))
+        .add_startup_system(add_player)
+        .add_startup_system(add_ground_plane)
+        .add_startup_system(add_light)
+        .add_startup_system(add_camera)
+        .add_system(gamepad_connection_events)
+        .add_system(gamepad_axis_changed_events)
+        .run();
 }
