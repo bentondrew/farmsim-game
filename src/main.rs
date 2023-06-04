@@ -13,7 +13,7 @@ use cameras::add_camera;
 use characters::players::add_player;
 use game_world::add_ground_plane;
 use lighting::add_light;
-use player_control::{gamepad_axis_changed_events, gamepad_connection_events};
+use player_control::{gamepad_connection_events, players_gamepad_axis_changed_events};
 
 fn main() {
     App::new()
@@ -29,6 +29,6 @@ fn main() {
         .add_startup_system(add_light)
         .add_startup_system(add_camera)
         .add_system(gamepad_connection_events)
-        .add_system(gamepad_axis_changed_events)
+        .add_system(players_gamepad_axis_changed_events(0))
         .run();
 }

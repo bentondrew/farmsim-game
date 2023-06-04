@@ -90,12 +90,17 @@ pub fn gamepad_connection_events(
     }
 }
 
-pub fn gamepad_axis_changed_events(mut axis_events: EventReader<GamepadAxisChangedEvent>) {
-    for axis_event in axis_events.iter() {
-        info!(
-            "{:?} of {:?} is changed to {}",
-            axis_event.axis_type, axis_event.gamepad, axis_event.value,
-        );
+pub fn players_gamepad_axis_changed_events(
+    player_id: u8,
+) -> impl Fn(EventReader<GamepadAxisChangedEvent>) {
+    move |mut axis_events: EventReader<GamepadAxisChangedEvent>| {
+        for axis_event in axis_events.iter() {
+            info!("Handling events for player {}", player_id);
+            info!(
+                "{:?} of {:?} is changed to {}",
+                axis_event.axis_type, axis_event.gamepad, axis_event.value,
+            );
+        }
     }
 }
 
