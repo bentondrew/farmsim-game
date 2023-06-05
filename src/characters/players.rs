@@ -1,9 +1,15 @@
 use bevy::prelude::{
-    default, shape, Assets, Bundle, Color, Commands, Mesh, PbrBundle, ResMut, StandardMaterial,
-    Transform,
+    default, shape, Assets, Bundle, Color, Commands, Component, Mesh, PbrBundle, ResMut,
+    StandardMaterial, Transform,
 };
 
-use super::common::{Name, PlayerCharacter};
+use super::common::Name;
+
+/// A component to indicate if an entity is a player character.
+#[derive(Component)]
+pub struct PlayerCharacter {
+    id: u8,
+}
 
 /// A component bundle used to initialize a player character.
 #[derive(Bundle)]
@@ -20,7 +26,7 @@ pub fn add_player(
     mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     let bundle = PlayerInitBundle {
-        character_type: PlayerCharacter,
+        character_type: PlayerCharacter { id: 0 },
         name: Name("Player1".to_string()),
         renderer_representation: PbrBundle {
             mesh: meshes.add(

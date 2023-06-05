@@ -7,7 +7,7 @@ use bevy::{
     prelude::{info, Commands, Component, Entity, EventReader, Gamepad, Query, With, Without},
 };
 
-use crate::characters::common::{Name, PlayerCharacter};
+use crate::characters::{common::Name, players::PlayerCharacter};
 
 /// A Bevy Engine component that is attached to an entity that represents the resource
 /// that controls that entity. Expected to be attached to entities that also have the

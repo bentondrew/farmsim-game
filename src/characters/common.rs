@@ -6,10 +6,6 @@ use bevy::prelude::Component;
 #[derive(Component)]
 pub struct Name(pub String);
 
-/// A component to indicate if an entity is a player character.
-#[derive(Component)]
-pub struct PlayerCharacter;
-
 /// A component to indicate if an entity is not a player  character.
 #[derive(Component)]
 pub struct NonPlayerCharacter;
