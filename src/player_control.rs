@@ -7,7 +7,7 @@ use bevy::{
     prelude::{info, Commands, Component, Entity, EventReader, Gamepad, Query, With, Without},
 };
 
-use crate::characters::{common::Name, players::PlayerCharacter};
+use crate::characters::players::PlayerCharacter;
 
 /// A Bevy Engine component that is attached to an entity that represents the resource
 /// that controls that entity. Expected to be attached to entities that also have the
@@ -63,14 +63,17 @@ fn connect_controller_to_player(
 fn disconnect_controller_from_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
-    player_entities_with_controllers: &Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
+    player_entities_with_controllers: &Query<
+        (Entity, &PlayerCharacter, &Controller),
+        With<PlayerCharacter>,
+    >,
 ) {
-    for (player_entity, player_name, controller) in player_entities_with_controllers {
+    for (player_entity, player, controller) in player_entities_with_controllers {
         if controller.gamepad.id == connection_event.gamepad.id {
             commands.entity(player_entity).remove::<Controller>();
             info!(
-                "Controller with gamepad of id {} removed from player {}",
-                connection_event.gamepad.id, player_name.0
+                "Controller with gamepad of id {} removed from player with id {}",
+                connection_event.gamepad.id, player.id
             );
             break;
         }
@@ -82,7 +85,10 @@ fn disconnect_controller_from_player(
 pub fn gamepad_connection_events(
     mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
-    player_entities_with_controllers: Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
+    player_entities_with_controllers: Query<
+        (Entity, &PlayerCharacter, &Controller),
+        With<PlayerCharacter>,
+    >,
     player_entities_without_controllers: Query<(Entity, &PlayerCharacter), Without<Controller>>,
 ) {
     for connection_event in connection_events.iter() {
