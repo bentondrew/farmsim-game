@@ -18,7 +18,7 @@ pub struct Controller {
 }
 
 /// A function that is run on GamepadConnection.Connected GamepadConnectionEvents to
-/// add the connected gamepad to the first player in the players_without_controllers
+/// add the connected gamepad to the first player in the player_entities_without_controllers
 /// query.
 /// This function also works if the gamepad is connected to the machine before the
 /// program starts because on program startup, the player character is added before
@@ -39,12 +39,14 @@ fn connect_controller_to_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
     gamepad_info: &GamepadInfo,
-    players_without_controllers: &Query<
+    player_entities_without_controllers: &Query<
         (Entity, &Name),
         (With<PlayerCharacter>, Without<Controller>),
     >,
 ) {
-    if let Some((player_entity, player_name)) = players_without_controllers.into_iter().next() {
+    if let Some((player_entity, player_name)) =
+        player_entities_without_controllers.into_iter().next()
+    {
         commands.entity(player_entity).insert(Controller {
             gamepad: connection_event.gamepad,
         });
@@ -57,7 +59,7 @@ fn connect_controller_to_player(
 
 /// A function that is run on GamepadConnection.Disconnected GamepadConnectionEvents to
 /// remove the disconnected gamepad from the first player in the
-/// players_with_controllers query that has a gamepad with an id that matches the id of
+/// player_entities_with_controllers query that has a gamepad with an id that matches the id of
 /// the gamepad that disconnected.
 ///
 /// TODO: Make this an updated corollary to the connected function. This function would
@@ -66,9 +68,9 @@ fn connect_controller_to_player(
 fn disconnect_controller_from_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
-    players_with_controllers: &Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
+    player_entities_with_controllers: &Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
 ) {
-    for (player_entity, player_name, controller) in players_with_controllers {
+    for (player_entity, player_name, controller) in player_entities_with_controllers {
         if controller.gamepad.id == connection_event.gamepad.id {
             commands.entity(player_entity).remove::<Controller>();
             info!(
@@ -85,8 +87,8 @@ fn disconnect_controller_from_player(
 pub fn gamepad_connection_events(
     mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
-    players_with_controllers: Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
-    players_without_controllers: Query<
+    player_entities_with_controllers: Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
+    player_entities_without_controllers: Query<
         (Entity, &Name),
         (With<PlayerCharacter>, Without<Controller>),
     >,
@@ -97,12 +99,12 @@ pub fn gamepad_connection_events(
                 &mut commands,
                 connection_event,
                 gamepad_info,
-                &players_without_controllers,
+                &player_entities_without_controllers,
             ),
             Disconnected => disconnect_controller_from_player(
                 &mut commands,
                 connection_event,
-                &players_with_controllers,
+                &player_entities_with_controllers,
             ),
         }
     }
