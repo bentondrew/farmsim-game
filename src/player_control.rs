@@ -39,10 +39,7 @@ fn connect_controller_to_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
     gamepad_info: &GamepadInfo,
-    player_entities_without_controllers: &Query<
-        (Entity, &PlayerCharacter),
-        (With<PlayerCharacter>, Without<Controller>),
-    >,
+    player_entities_without_controllers: &Query<(Entity, &PlayerCharacter), Without<Controller>>,
 ) {
     if let Some((player_entity, player)) = player_entities_without_controllers.into_iter().next() {
         commands.entity(player_entity).insert(Controller {
@@ -86,10 +83,7 @@ pub fn gamepad_connection_events(
     mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
     player_entities_with_controllers: Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
-    player_entities_without_controllers: Query<
-        (Entity, &PlayerCharacter),
-        (With<PlayerCharacter>, Without<Controller>),
-    >,
+    player_entities_without_controllers: Query<(Entity, &PlayerCharacter), Without<Controller>>,
 ) {
     for connection_event in connection_events.iter() {
         match &connection_event.connection {
