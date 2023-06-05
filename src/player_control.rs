@@ -40,19 +40,17 @@ fn connect_controller_to_player(
     connection_event: &GamepadConnectionEvent,
     gamepad_info: &GamepadInfo,
     player_entities_without_controllers: &Query<
-        (Entity, &Name),
+        (Entity, &PlayerCharacter),
         (With<PlayerCharacter>, Without<Controller>),
     >,
 ) {
-    if let Some((player_entity, player_name)) =
-        player_entities_without_controllers.into_iter().next()
-    {
+    if let Some((player_entity, player)) = player_entities_without_controllers.into_iter().next() {
         commands.entity(player_entity).insert(Controller {
             gamepad: connection_event.gamepad,
         });
         info!(
-            "Gamepad {} of id {} assigned to player {}",
-            gamepad_info.name, connection_event.gamepad.id, player_name.0
+            "Gamepad {} of id {} assigned to player with id {}",
+            gamepad_info.name, connection_event.gamepad.id, player.id
         );
     }
 }
@@ -89,7 +87,7 @@ pub fn gamepad_connection_events(
     mut connection_events: EventReader<GamepadConnectionEvent>,
     player_entities_with_controllers: Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
     player_entities_without_controllers: Query<
-        (Entity, &Name),
+        (Entity, &PlayerCharacter),
         (With<PlayerCharacter>, Without<Controller>),
     >,
 ) {

@@ -8,7 +8,7 @@ use super::common::Name;
 /// A component to indicate if an entity is a player character.
 #[derive(Component)]
 pub struct PlayerCharacter {
-    id: u8,
+    pub id: u8,
 }
 
 /// A component bundle used to initialize a player character.
