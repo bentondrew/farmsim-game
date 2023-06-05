@@ -19,7 +19,7 @@ struct PlayerInitBundle {
     renderer_representation: PbrBundle,
 }
 
-/// This function generates a system that adds a player with the id provided.
+/// Generates a system that adds a player with the id provided.
 pub fn generate_add_player_system(
     player_id: u8,
 ) -> impl Fn(Commands, ResMut<Assets<Mesh>>, ResMut<Assets<StandardMaterial>>) {
