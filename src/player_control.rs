@@ -66,10 +66,7 @@ fn connect_controller_to_player(
 fn disconnect_controller_from_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
-    players_with_controllers: &Query<
-        (Entity, &Name, &Controller),
-        (With<PlayerCharacter>, With<Controller>),
-    >,
+    players_with_controllers: &Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
 ) {
     for (player_entity, player_name, controller) in players_with_controllers {
         if controller.gamepad.id == connection_event.gamepad.id {
@@ -88,10 +85,7 @@ fn disconnect_controller_from_player(
 pub fn gamepad_connection_events(
     mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
-    players_with_controllers: Query<
-        (Entity, &Name, &Controller),
-        (With<PlayerCharacter>, With<Controller>),
-    >,
+    players_with_controllers: Query<(Entity, &Name, &Controller), With<PlayerCharacter>>,
     players_without_controllers: Query<
         (Entity, &Name),
         (With<PlayerCharacter>, Without<Controller>),
