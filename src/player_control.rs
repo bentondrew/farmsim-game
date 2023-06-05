@@ -4,7 +4,7 @@ use bevy::{
         GamepadConnection::{Connected, Disconnected},
         GamepadConnectionEvent, GamepadInfo,
     },
-    prelude::{info, Commands, Component, Entity, EventReader, Gamepad, Query, With, Without},
+    prelude::{info, Commands, Component, Entity, EventReader, Gamepad, Query, Without},
 };
 
 use crate::characters::players::PlayerCharacter;
@@ -63,10 +63,7 @@ fn connect_controller_to_player(
 fn disconnect_controller_from_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
-    player_entities_with_controllers: &Query<
-        (Entity, &PlayerCharacter, &Controller),
-        With<PlayerCharacter>,
-    >,
+    player_entities_with_controllers: &Query<(Entity, &PlayerCharacter, &Controller)>,
 ) {
     for (player_entity, player, controller) in player_entities_with_controllers {
         if controller.gamepad.id == connection_event.gamepad.id {
@@ -85,10 +82,7 @@ fn disconnect_controller_from_player(
 pub fn gamepad_connection_events(
     mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
-    player_entities_with_controllers: Query<
-        (Entity, &PlayerCharacter, &Controller),
-        With<PlayerCharacter>,
-    >,
+    player_entities_with_controllers: Query<(Entity, &PlayerCharacter, &Controller)>,
     player_entities_without_controllers: Query<(Entity, &PlayerCharacter), Without<Controller>>,
 ) {
     for connection_event in connection_events.iter() {
