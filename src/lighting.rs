@@ -1,5 +1,6 @@
 use bevy::prelude::{default, Commands, PointLight, PointLightBundle, Transform};
 
+/// Initial system to add light to see the objects rendered.
 pub fn add_light(mut commands: Commands) {
     commands.spawn(PointLightBundle {
         point_light: PointLight {

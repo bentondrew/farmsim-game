@@ -9,11 +9,32 @@ use bevy::{
 
 use crate::characters::common::{Name, PlayerCharacter};
 
+/// A Bevy Engine component that is attached to an entity that represents the resource
+/// that controls that entity. Expected to be attached to entities that also have the
+/// Player component. Currently only supports Gamepad controls.
 #[derive(Component)]
 pub struct Controller {
     gamepad: Gamepad,
 }
 
+/// A function that is run on GamepadConnection.Connected GamepadConnectionEvents to
+/// add the connected gamepad to the first player in the players_without_controllers
+/// query.
+/// This function also works if the gamepad is connected to the machine before the
+/// program starts because on program startup, the player character is added before
+/// checking for connected gamepads (the check for connected gamepads when the program
+/// starts issues a connection event for all gamepads connected with the machine before
+/// the program started).
+///
+/// TODO: It probably makes sense to change the logic here. The current logic expects
+/// a player to already be created, which is fine for this early development. But, in
+/// the long run, it probably makes sense for a controller connection event to spawn a
+/// player entity. That way a player can drop in rather than needing to pick the number
+/// of players when launching the game.
+/// A consequence of this would probably needing to spawn a generic player that loads
+/// from saved data or created from new. Another consequence of this would be
+/// potentially trying to connect to an existing player for an in-progress game (like
+/// the gamepad dies and connecting a new one to keep playing).
 fn connect_controller_to_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
@@ -23,10 +44,6 @@ fn connect_controller_to_player(
         (With<PlayerCharacter>, Without<Controller>),
     >,
 ) {
-    // For the first player entity in the query, add the connected controller.
-    // This also works on startup as the gamepad resources are added after
-    // creating a player and the gamepad connection events are caught for gamepads that
-    // are already on when the game is started.
     if let Some((player_entity, player_name)) = players_without_controllers.into_iter().next() {
         commands.entity(player_entity).insert(Controller {
             gamepad: connection_event.gamepad,
@@ -38,6 +55,14 @@ fn connect_controller_to_player(
     }
 }
 
+/// A function that is run on GamepadConnection.Disconnected GamepadConnectionEvents to
+/// remove the disconnected gamepad from the first player in the
+/// players_with_controllers query that has a gamepad with an id that matches the id of
+/// the gamepad that disconnected.
+///
+/// TODO: Make this an updated corollary to the connected function. This function would
+/// despawn the player for the gamepad that was disconnected. There also might need to
+/// be some logic to deal with gamepads that disconnect due to a lose of power.
 fn disconnect_controller_from_player(
     commands: &mut Commands,
     connection_event: &GamepadConnectionEvent,
@@ -46,9 +71,6 @@ fn disconnect_controller_from_player(
         (With<PlayerCharacter>, With<Controller>),
     >,
 ) {
-    // Find the first entity with a controlled with a gamepad id
-    // matching the gamepad id from the event, then remove the
-    // controller from that entity.
     for (player_entity, player_name, controller) in players_with_controllers {
         if controller.gamepad.id == connection_event.gamepad.id {
             commands.entity(player_entity).remove::<Controller>();
@@ -61,6 +83,8 @@ fn disconnect_controller_from_player(
     }
 }
 
+/// A system that listens to the gamepad connection events and then executes
+/// the appropriate function based on the event type.
 pub fn gamepad_connection_events(
     mut commands: Commands,
     mut connection_events: EventReader<GamepadConnectionEvent>,
@@ -90,6 +114,14 @@ pub fn gamepad_connection_events(
     }
 }
 
+/// Generates a system for the provided player id that listens to the
+/// GamepadAxisChangedEvent events.
+///
+/// TODO: The intent of this function is to filter the events based on the player
+/// id to get the events associated with that player's gamepad. This function will
+/// initially be used to get the left stick events to move the player. Additional
+/// systems will need to be created to capture the right stick events to move the
+/// camera and capture the button presses.
 pub fn players_gamepad_axis_changed_events(
     player_id: u8,
 ) -> impl Fn(EventReader<GamepadAxisChangedEvent>) {

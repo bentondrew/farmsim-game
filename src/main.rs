@@ -15,6 +15,7 @@ use game_world::add_ground_plane;
 use lighting::add_light;
 use player_control::{gamepad_connection_events, players_gamepad_axis_changed_events};
 
+/// Creates and runs the game application based on the bevy engine crate.
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
