@@ -19,6 +19,7 @@ use player_control::{
 
 /// Creates and runs the game application based on the bevy engine crate.
 fn main() {
+    let player_id = 0;
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
@@ -27,11 +28,13 @@ fn main() {
             }),
             ..default()
         }))
-        .add_startup_system(generate_add_player_system(0))
+        .add_startup_system(generate_add_player_system(player_id))
         .add_startup_system(add_ground_plane)
         .add_startup_system(add_light)
         .add_startup_system(add_camera)
         .add_system(gamepad_connection_events)
-        .add_system(generate_players_gamepad_axis_changed_events_system(0))
+        .add_system(generate_players_gamepad_axis_changed_events_system(
+            player_id,
+        ))
         .run();
 }
