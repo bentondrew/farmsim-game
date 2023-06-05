@@ -122,7 +122,7 @@ pub fn gamepad_connection_events(
 /// initially be used to get the left stick events to move the player. Additional
 /// systems will need to be created to capture the right stick events to move the
 /// camera and capture the button presses.
-pub fn players_gamepad_axis_changed_events(
+pub fn players_gamepad_axis_changed_events_system(
     player_id: u8,
 ) -> impl Fn(EventReader<GamepadAxisChangedEvent>) {
     move |mut axis_events: EventReader<GamepadAxisChangedEvent>| {
