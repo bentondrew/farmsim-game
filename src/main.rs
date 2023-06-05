@@ -10,7 +10,7 @@ use bevy::{
     window::{Window, WindowPlugin},
 };
 use cameras::add_camera;
-use characters::players::add_player;
+use characters::players::generate_add_player_system;
 use game_world::add_ground_plane;
 use lighting::add_light;
 use player_control::{
@@ -27,7 +27,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_startup_system(add_player)
+        .add_startup_system(generate_add_player_system(0))
         .add_startup_system(add_ground_plane)
         .add_startup_system(add_light)
         .add_startup_system(add_camera)
