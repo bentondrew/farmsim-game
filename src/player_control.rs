@@ -113,6 +113,13 @@ pub fn gamepad_connection_events(
 pub fn generate_players_gamepad_axis_changed_events_system(
     player_id: u8,
 ) -> impl Fn(EventReader<GamepadAxisChangedEvent>) {
+    // TODO: Add a query to get the player character component and gamepad component
+    // to be able to filter the events.
+
+    // TODO: Once the events are filtered for the player, filter to left stick events.
+
+    // TODO: Once events are down filtered for the player's gamepad's left stick events,
+    // apply the events to the player's entity transformations.
     move |mut axis_events: EventReader<GamepadAxisChangedEvent>| {
         for axis_event in axis_events.iter() {
             info!("Handling events for player {}", player_id);
