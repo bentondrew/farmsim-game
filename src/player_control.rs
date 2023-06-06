@@ -103,7 +103,7 @@ pub fn gamepad_connection_events(
 }
 
 /// Generates a system for the provided player id that listens to the
-/// GamepadAxisChangedEvent events.
+/// GamepadAxisChangedEvent events for the gamepad associated with that player.
 ///
 /// TODO: The intent of this function is to filter the events based on the player
 /// id to get the events associated with that player's gamepad. This function will
@@ -112,21 +112,33 @@ pub fn gamepad_connection_events(
 /// camera and capture the button presses.
 pub fn generate_players_gamepad_axis_changed_events_system(
     player_id: u8,
-) -> impl Fn(EventReader<GamepadAxisChangedEvent>) {
-    // TODO: Add a query to get the player character component and gamepad component
-    // to be able to filter the events.
-
+) -> impl Fn(EventReader<GamepadAxisChangedEvent>, Query<(&PlayerCharacter, &Controller)>) {
     // TODO: Once the events are filtered for the player, filter to left stick events.
 
     // TODO: Once events are down filtered for the player's gamepad's left stick events,
     // apply the events to the player's entity transformations.
-    move |mut axis_events: EventReader<GamepadAxisChangedEvent>| {
+    move |mut axis_events: EventReader<GamepadAxisChangedEvent>,
+          players_with_controllers: Query<(&PlayerCharacter, &Controller)>| {
+        let mut player_gamepad: Option<Gamepad> = None;
+        for (player, controller) in players_with_controllers.iter() {
+            if player.id == player_id {
+                player_gamepad = Some(controller.gamepad);
+            }
+        }
         for axis_event in axis_events.iter() {
             info!("Handling events for player {}", player_id);
-            info!(
-                "{:?} of {:?} is changed to {}",
-                axis_event.axis_type, axis_event.gamepad, axis_event.value,
-            );
+            let _result = match player_gamepad {
+                Some(gamepad) => {
+                    info!("Player's gamepad has id {}", gamepad.id);
+                    if gamepad.id == axis_event.gamepad.id {
+                        info!(
+                            "{:?} of {:?} is changed to {}",
+                            axis_event.axis_type, axis_event.gamepad, axis_event.value,
+                        );
+                    };
+                }
+                None => (),
+            };
         }
     }
 }
