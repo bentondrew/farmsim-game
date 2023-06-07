@@ -4,7 +4,9 @@ use bevy::{
         GamepadConnection::{Connected, Disconnected},
         GamepadConnectionEvent, GamepadInfo,
     },
-    prelude::{info, Commands, Component, Entity, EventReader, Gamepad, Query, Without},
+    prelude::{
+        info, Commands, Component, Entity, EventReader, Gamepad, GamepadAxisType, Query, Without,
+    },
 };
 
 use crate::characters::players::PlayerCharacter;
@@ -103,7 +105,8 @@ pub fn gamepad_connection_events(
 }
 
 /// Generates a system for the provided player id that listens to the
-/// GamepadAxisChangedEvent events for the gamepad associated with that player.
+/// GamepadAxisChangedEvent events for the left stick of the gamepad associated with
+/// that player.
 ///
 /// TODO: The intent of this function is to filter the events based on the player
 /// id to get the events associated with that player's gamepad. This function will
@@ -113,7 +116,8 @@ pub fn gamepad_connection_events(
 pub fn generate_players_gamepad_left_stick_events_system(
     player_id: u8,
 ) -> impl Fn(EventReader<GamepadAxisChangedEvent>, Query<(&PlayerCharacter, &Controller)>) {
-    // TODO: Once the events are filtered for the player, filter to left stick events.
+    // TODO: x and y axis events are separate, need to figure out how to make an x, y pair
+    // from the two separate events.
 
     // TODO: Once events are down filtered for the player's gamepad's left stick events,
     // apply the events to the player's entity transformations.
@@ -131,10 +135,15 @@ pub fn generate_players_gamepad_left_stick_events_system(
                 Some(gamepad) => {
                     info!("Player's gamepad has id {}", gamepad.id);
                     if gamepad.id == axis_event.gamepad.id {
-                        info!(
-                            "{:?} of {:?} is changed to {}",
-                            axis_event.axis_type, axis_event.gamepad, axis_event.value,
-                        );
+                        let mut x = 0.0;
+                        let mut y = 0.0;
+                        let _left_stick_result = match axis_event.axis_type {
+                            GamepadAxisType::LeftStickX => x = axis_event.value,
+                            GamepadAxisType::LeftStickY => y = axis_event.value,
+                            _ => (),
+                        };
+                        info!("Left stick x value {}", x);
+                        info!("Left stick y value {}", y)
                     };
                 }
                 None => (),
