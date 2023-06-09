@@ -39,7 +39,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_startup_system(generate_add_player_system(player.id))
+        .add_startup_system(generate_add_player_system(player.id, player.spawn_location))
         .add_startup_system(add_ground_plane)
         .add_startup_system(add_light)
         .add_startup_system(generate_add_camera_system(player.id))
