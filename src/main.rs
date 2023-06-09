@@ -13,9 +13,7 @@ use cameras::add_camera;
 use characters::players::generate_add_player_system;
 use game_world::add_ground_plane;
 use lighting::add_light;
-use player_control::{
-    gamepad_connection_events, generate_players_gamepad_left_stick_events_system,
-};
+use player_control::{gamepad_connection_events, generate_move_player_system};
 
 /// Creates and runs the game application based on the bevy engine crate.
 fn main() {
@@ -33,6 +31,6 @@ fn main() {
         .add_startup_system(add_light)
         .add_startup_system(add_camera)
         .add_system(gamepad_connection_events)
-        .add_system(generate_players_gamepad_left_stick_events_system(player_id))
+        .add_system(generate_move_player_system(player_id))
         .run();
 }

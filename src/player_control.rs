@@ -1,12 +1,11 @@
 use bevy::{
     input::gamepad::{
-        GamepadAxisChangedEvent,
         GamepadConnection::{Connected, Disconnected},
         GamepadConnectionEvent, GamepadInfo,
     },
     prelude::{
-        info, Commands, Component, Entity, EventReader, Gamepad, GamepadAxisType, Query, Res, Time,
-        Transform, Without,
+        info, Axis, Commands, Component, Entity, EventReader, Gamepad, GamepadAxis,
+        GamepadAxisType, Gamepads, Query, Res, Time, Transform, Vec3, Without,
     },
 };
 
@@ -105,56 +104,43 @@ pub fn gamepad_connection_events(
     }
 }
 
-/// Generates a system for the provided player id that listens to the
-/// GamepadAxisChangedEvent events for the left stick of the gamepad associated with
-/// that player. These events are then used to move the player in the window.
-///
-/// This doesn't work quite as expected. Since this is on;y picking up changes it
-/// only moves when the stick changes values and doesn't keep moving if the stick
-/// is held in one spot.
-/// The desired behavior is to not move when the stick is centered and move in
-/// the direction and speed from where the stick location is at.
-///
-/// TODO: The intent of this function is to filter the events based on the player
-/// id to get the events associated with that player's gamepad. This function will
-/// initially be used to get the left stick events to move the player. Additional
-/// systems will need to be created to capture the right stick events to move the
-/// camera and capture the button presses.
-pub fn generate_players_gamepad_left_stick_events_system(
+/// Generates a system to move a player entity's transform based on the input from the
+/// player's gamepad's left stick.
+pub fn generate_move_player_system(
     player_id: u8,
 ) -> impl Fn(
-    EventReader<GamepadAxisChangedEvent>,
+    Res<Gamepads>,
+    Res<Axis<GamepadAxis>>,
     Query<(&PlayerCharacter, &Controller, &mut Transform)>,
     Res<Time>,
 ) {
-    move |mut axis_events: EventReader<GamepadAxisChangedEvent>,
+    // This closure is the system that is generated.
+    move |gamepads: Res<Gamepads>,
+          axes: Res<Axis<GamepadAxis>>,
           mut players_with_controllers: Query<(&PlayerCharacter, &Controller, &mut Transform)>,
           timer: Res<Time>| {
         for (player, controller, mut transform) in players_with_controllers.iter_mut() {
+            // Find the player that this system is for
             if player.id == player_id {
-                for axis_event in axis_events.iter() {
-                    if controller.gamepad.id == axis_event.gamepad.id {
+                for gamepad in gamepads.iter() {
+                    // Find the controller associated with the player
+                    if controller.gamepad.id == gamepad.id {
                         let speed = 10.0;
-                        match axis_event.axis_type {
-                            // Left X axis on the gamepad maps to Z axis on the
-                            // 3d plane.
-                            GamepadAxisType::LeftStickX => {
-                                let z_location = transform.local_z();
-                                transform.translation +=
-                                    z_location * speed * axis_event.value * timer.delta_seconds();
-                            }
-                            // Left Y axis on the gamepad maps to the X axis on the
-                            // 3d plane.
-                            GamepadAxisType::LeftStickY => {
-                                let x_location = transform.local_x();
-                                transform.translation +=
-                                    x_location * speed * axis_event.value * timer.delta_seconds();
-                            }
-                            _ => (),
-                        };
+                        let x_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX);
+                        let y_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY);
+                        // Get the axis information from the gamepad and move the
+                        // player's entity based on the axis info.
+                        if let (Some(x_axis), Some(y_axis)) = (axes.get(x_axis), axes.get(y_axis)) {
+                            let x_displacement = speed * y_axis * timer.delta_seconds();
+                            let z_displacement = speed * x_axis * timer.delta_seconds();
+                            let displacement = Vec3::new(x_displacement, 0.0, z_displacement);
+                            transform.translation += displacement;
+                        }
+                        // Since we found the player's controller, stop
+                        break;
                     }
                 }
-                // Found the player we are interested in so no need to iterate further.
+                // Since we found the player of interest, stop
                 break;
             }
         }
