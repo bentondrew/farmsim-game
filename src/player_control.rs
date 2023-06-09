@@ -5,7 +5,8 @@ use bevy::{
         GamepadConnectionEvent, GamepadInfo,
     },
     prelude::{
-        info, Commands, Component, Entity, EventReader, Gamepad, GamepadAxisType, Query, Without,
+        info, Commands, Component, Entity, EventReader, Gamepad, GamepadAxisType, Query, Res, Time,
+        Transform, Without,
     },
 };
 
@@ -106,7 +107,13 @@ pub fn gamepad_connection_events(
 
 /// Generates a system for the provided player id that listens to the
 /// GamepadAxisChangedEvent events for the left stick of the gamepad associated with
-/// that player.
+/// that player. These events are then used to move the player in the window.
+///
+/// This doesn't work quite as expected. Since this is on;y picking up changes it
+/// only moves when the stick changes values and doesn't keep moving if the stick
+/// is held in one spot.
+/// The desired behavior is to not move when the stick is centered and move in
+/// the direction and speed from where the stick location is at.
 ///
 /// TODO: The intent of this function is to filter the events based on the player
 /// id to get the events associated with that player's gamepad. This function will
@@ -115,39 +122,41 @@ pub fn gamepad_connection_events(
 /// camera and capture the button presses.
 pub fn generate_players_gamepad_left_stick_events_system(
     player_id: u8,
-) -> impl Fn(EventReader<GamepadAxisChangedEvent>, Query<(&PlayerCharacter, &Controller)>) {
-    // TODO: x and y axis events are separate, need to figure out how to make an x, y pair
-    // from the two separate events.
-
-    // TODO: Once events are down filtered for the player's gamepad's left stick events,
-    // apply the events to the player's entity transformations.
+) -> impl Fn(
+    EventReader<GamepadAxisChangedEvent>,
+    Query<(&PlayerCharacter, &Controller, &mut Transform)>,
+    Res<Time>,
+) {
     move |mut axis_events: EventReader<GamepadAxisChangedEvent>,
-          players_with_controllers: Query<(&PlayerCharacter, &Controller)>| {
-        let mut player_gamepad: Option<Gamepad> = None;
-        for (player, controller) in players_with_controllers.iter() {
+          mut players_with_controllers: Query<(&PlayerCharacter, &Controller, &mut Transform)>,
+          timer: Res<Time>| {
+        for (player, controller, mut transform) in players_with_controllers.iter_mut() {
             if player.id == player_id {
-                player_gamepad = Some(controller.gamepad);
-            }
-        }
-        for axis_event in axis_events.iter() {
-            info!("Handling events for player {}", player_id);
-            let _result = match player_gamepad {
-                Some(gamepad) => {
-                    info!("Player's gamepad has id {}", gamepad.id);
-                    if gamepad.id == axis_event.gamepad.id {
-                        let mut x = 0.0;
-                        let mut y = 0.0;
-                        let _left_stick_result = match axis_event.axis_type {
-                            GamepadAxisType::LeftStickX => x = axis_event.value,
-                            GamepadAxisType::LeftStickY => y = axis_event.value,
+                for axis_event in axis_events.iter() {
+                    if controller.gamepad.id == axis_event.gamepad.id {
+                        let speed = 10.0;
+                        match axis_event.axis_type {
+                            // Left X axis on the gamepad maps to Z axis on the
+                            // 3d plane.
+                            GamepadAxisType::LeftStickX => {
+                                let z_location = transform.local_z();
+                                transform.translation +=
+                                    z_location * speed * axis_event.value * timer.delta_seconds();
+                            }
+                            // Left Y axis on the gamepad maps to the X axis on the
+                            // 3d plane.
+                            GamepadAxisType::LeftStickY => {
+                                let x_location = transform.local_x();
+                                transform.translation +=
+                                    x_location * speed * axis_event.value * timer.delta_seconds();
+                            }
                             _ => (),
                         };
-                        info!("Left stick x value {}", x);
-                        info!("Left stick y value {}", y)
-                    };
+                    }
                 }
-                None => (),
-            };
+                // Found the player we are interested in so no need to iterate further.
+                break;
+            }
         }
     }
 }
