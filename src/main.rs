@@ -9,7 +9,7 @@ use bevy::{
     prelude::{default, DefaultPlugins, PluginGroup},
     window::{Window, WindowPlugin},
 };
-use cameras::add_camera;
+use cameras::generate_add_camera_system;
 use characters::players::generate_add_player_system;
 use game_world::add_ground_plane;
 use lighting::add_light;
@@ -29,7 +29,7 @@ fn main() {
         .add_startup_system(generate_add_player_system(player_id))
         .add_startup_system(add_ground_plane)
         .add_startup_system(add_light)
-        .add_startup_system(add_camera)
+        .add_startup_system(generate_add_camera_system(player_id))
         .add_system(gamepad_connection_events)
         .add_system(generate_move_player_system(player_id))
         .run();
