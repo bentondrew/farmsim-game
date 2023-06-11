@@ -9,6 +9,7 @@ use super::common::Name;
 #[derive(Component)]
 pub struct PlayerCharacter {
     pub id: u8,
+    pub player_height_mid_point: f32,
 }
 
 /// A component bundle used to initialize a player character.
@@ -32,7 +33,10 @@ pub fn generate_add_player_system(
         let initial_player_translation =
             spawn_location + Vec3::new(0.0, player_height_mid_point, 0.0);
         let bundle = PlayerInitBundle {
-            character_type: PlayerCharacter { id: player_id },
+            character_type: PlayerCharacter {
+                id: player_id,
+                player_height_mid_point: player_height_mid_point,
+            },
             name: Name("Player1".to_string()),
             renderer_representation: PbrBundle {
                 mesh: meshes.add(
