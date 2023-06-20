@@ -9,7 +9,7 @@ use bevy::{
     },
 };
 
-use crate::characters::players::PlayerCharacter;
+use crate::{cameras::PlayerCamera, characters::players::PlayerCharacter};
 
 /// A Bevy Engine component that is attached to an entity that represents the resource
 /// that controls that entity. Expected to be attached to entities that also have the
@@ -17,6 +17,12 @@ use crate::characters::players::PlayerCharacter;
 #[derive(Component)]
 pub struct Controller {
     gamepad: Gamepad,
+}
+
+/// Contains player information for determining player movement.
+struct PlayerInfo {
+    entity: Entity,
+    gamepad_id: usize,
 }
 
 /// A function that is run on GamepadConnection.Connected GamepadConnectionEvents to
@@ -104,6 +110,75 @@ pub fn gamepad_connection_events(
     }
 }
 
+/// Return the entity and gamepad id for the requested player.
+fn get_player_entity_and_gamepad_id(
+    player_id: u8,
+    players_with_controller: Query<(Entity, &PlayerCharacter, &Controller)>,
+) -> Option<PlayerInfo> {
+    let mut player_data = None;
+    for (player_entity, player, controller) in players_with_controller.iter() {
+        if player.id == player_id {
+            player_data = Some(PlayerInfo {
+                entity: player_entity,
+                gamepad_id: controller.gamepad.id,
+            });
+            // Found the info for the player of interest so stop.
+            break;
+        }
+    }
+    return player_data;
+}
+
+/// Return the entity of the camera associated with the requested player.
+fn get_player_camera(
+    player_id: u8,
+    player_cameras: Query<(Entity, &PlayerCamera)>,
+) -> Option<Entity> {
+    let mut camera_data = None;
+    for (camera_entity, player_camera) in player_cameras.iter() {
+        if player_camera.player_id == player_id {
+            camera_data = Some(camera_entity);
+            // Found the entity for the camera associated with the player so stop.
+            break;
+        }
+    }
+    return camera_data;
+}
+
+/// Returns the requested gamepad.
+fn get_gamepad(gamepad_id: usize, gamepads: Res<Gamepads>) -> Option<Gamepad> {
+    let mut gamepad_returned = None;
+    for gamepad in gamepads.iter() {
+        if gamepad.id == gamepad_id {
+            gamepad_returned = Some(gamepad);
+            // Found the gamepad we want so stop.
+            break;
+        }
+    }
+    return gamepad_returned;
+}
+
+/// Gets the axis state of the gamepad and uses it to calculate a displacement
+/// vector for the frame.
+fn calculate_displacement_vector(
+    gamepad: Gamepad,
+    axes: Res<Axis<GamepadAxis>>,
+    timer: Res<Time>,
+) -> Option<Vec3> {
+    let mut displacement_vector = None;
+    let speed = 10.0;
+    let x_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX);
+    let y_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY);
+    // Get the axis information from the gamepad and move the
+    // player's entity based on the axis info.
+    if let (Some(x_axis), Some(y_axis)) = (axes.get(x_axis), axes.get(y_axis)) {
+        let x_displacement = speed * y_axis * timer.delta_seconds();
+        let z_displacement = speed * x_axis * timer.delta_seconds();
+        displacement_vector = Some(Vec3::new(x_displacement, 0.0, z_displacement));
+    }
+    return displacement_vector;
+}
+
 /// Generates a system to move a player entity's transform based on the input from the
 /// player's gamepad's left stick.
 pub fn generate_move_player_system(
@@ -111,37 +186,31 @@ pub fn generate_move_player_system(
 ) -> impl Fn(
     Res<Gamepads>,
     Res<Axis<GamepadAxis>>,
-    Query<(&PlayerCharacter, &Controller, &mut Transform)>,
+    Query<(Entity, &PlayerCharacter, &Controller)>,
+    Query<(Entity, &PlayerCamera)>,
+    Query<&mut Transform>,
     Res<Time>,
 ) {
     // This closure is the system that is generated.
     move |gamepads: Res<Gamepads>,
           axes: Res<Axis<GamepadAxis>>,
-          mut players_with_controllers: Query<(&PlayerCharacter, &Controller, &mut Transform)>,
+          players_with_controller: Query<(Entity, &PlayerCharacter, &Controller)>,
+          player_cameras: Query<(Entity, &PlayerCamera)>,
+          mut transforms: Query<&mut Transform>,
           timer: Res<Time>| {
-        for (player, controller, mut transform) in players_with_controllers.iter_mut() {
-            // Find the player that this system is for
-            if player.id == player_id {
-                for gamepad in gamepads.iter() {
-                    // Find the controller associated with the player
-                    if controller.gamepad.id == gamepad.id {
-                        let speed = 10.0;
-                        let x_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX);
-                        let y_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY);
-                        // Get the axis information from the gamepad and move the
-                        // player's entity based on the axis info.
-                        if let (Some(x_axis), Some(y_axis)) = (axes.get(x_axis), axes.get(y_axis)) {
-                            let x_displacement = speed * y_axis * timer.delta_seconds();
-                            let z_displacement = speed * x_axis * timer.delta_seconds();
-                            let displacement = Vec3::new(x_displacement, 0.0, z_displacement);
-                            transform.translation += displacement;
-                        }
-                        // Since we found the player's controller, stop
-                        break;
+        if let (Some(player_info), Some(camera_entity)) = (
+            get_player_entity_and_gamepad_id(player_id, players_with_controller),
+            get_player_camera(player_id, player_cameras),
+        ) {
+            if let Some(gamepad) = get_gamepad(player_info.gamepad_id, gamepads) {
+                if let Some(displacement) = calculate_displacement_vector(gamepad, axes, timer) {
+                    if let Ok(mut player_transform) = transforms.get_mut(player_info.entity) {
+                        player_transform.translation += displacement;
+                    }
+                    if let Ok(mut camera_transform) = transforms.get_mut(camera_entity) {
+                        camera_transform.translation += displacement;
                     }
                 }
-                // Since we found the player of interest, stop
-                break;
             }
         }
     }
