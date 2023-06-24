@@ -7,9 +7,9 @@ use bevy::{
     prelude::{default, DefaultPlugins, PluginGroup, Vec3},
     window::{Window, WindowPlugin},
 };
-use characters::player::{
-    entity::generate_add_player_system,
-    entity_control::{gamepad_connection_events, generate_move_player_system},
+use characters::player::entity::{
+    control::{gamepad_connection_events, generate_move_player_system},
+    start_up::generate_add_player_system,
 };
 use game_world::add_ground_plane;
 use lighting::add_light;
