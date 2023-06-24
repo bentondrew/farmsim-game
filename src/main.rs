@@ -1,17 +1,18 @@
 mod characters;
 mod game_world;
 mod lighting;
-mod player_control;
 
 use bevy::{
     app::App,
     prelude::{default, DefaultPlugins, PluginGroup, Vec3},
     window::{Window, WindowPlugin},
 };
-use characters::player::entity::generate_add_player_system;
+use characters::player::entity::{
+    control::{gamepad_connection_events, generate_move_player_system},
+    start_up::generate_add_player_system,
+};
 use game_world::add_ground_plane;
 use lighting::add_light;
-use player_control::{gamepad_connection_events, generate_move_player_system};
 
 #[derive(Debug)]
 struct Player {

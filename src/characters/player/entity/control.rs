@@ -9,7 +9,7 @@ use bevy::{
     },
 };
 
-use crate::characters::player::entity::PlayerCharacter;
+use super::components::PlayerCharacter;
 
 /// A Bevy Engine component that is attached to an entity that represents the resource
 /// that controls that entity. Expected to be attached to entities that also have the
