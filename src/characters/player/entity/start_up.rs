@@ -3,8 +3,8 @@ use bevy::prelude::{
     StandardMaterial, Transform, Vec3,
 };
 
-use crate::characters::{common::Name, player::camera::create_camera_init_bundle};
-
+use super::super::super::common::Name;
+use super::super::camera::start_up::create_camera_init_bundle;
 use super::components::PlayerCharacter;
 
 /// A component bundle used to initialize a player character.
