@@ -21,7 +21,7 @@ struct PlayerInitBundle {
 }
 
 /// Creates the bundle to add the player entity.
-fn create_play_init_bundle(
+fn create_player_init_bundle(
     player_id: u8,
     spawn_location: Vec3,
     meshes: &mut ResMut<Assets<Mesh>>,
@@ -65,7 +65,7 @@ pub fn generate_add_player_system(
           mut meshes: ResMut<Assets<Mesh>>,
           mut materials: ResMut<Assets<StandardMaterial>>| {
         let player_init_bundle =
-            create_play_init_bundle(player_id, spawn_location, &mut meshes, &mut materials);
+            create_player_init_bundle(player_id, spawn_location, &mut meshes, &mut materials);
         let player_entity = commands.spawn(player_init_bundle).id();
         let camera_init_bundle = create_camera_init_bundle(player_id, spawn_location);
         let camera_entity = commands.spawn(camera_init_bundle).id();
