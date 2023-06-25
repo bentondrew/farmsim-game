@@ -7,9 +7,12 @@ use bevy::{
     prelude::{default, DefaultPlugins, PluginGroup, Vec3},
     window::{Window, WindowPlugin},
 };
-use characters::player::entity::{
-    control::{gamepad_connection_events, generate_move_player_system},
-    start_up::generate_add_player_system,
+use characters::player::{
+    camera::control::generate_move_player_camera_system,
+    entity::{
+        control::{gamepad_connection_events, generate_move_player_system},
+        start_up::generate_add_player_system,
+    },
 };
 use game_world::add_ground_plane;
 use lighting::add_light;
@@ -43,5 +46,6 @@ fn main() {
         .add_startup_system(add_light)
         .add_system(gamepad_connection_events)
         .add_system(generate_move_player_system(player.id))
+        .add_system(generate_move_player_camera_system(player.id))
         .run();
 }
