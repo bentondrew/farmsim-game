@@ -3,7 +3,7 @@ use bevy::prelude::{
     StandardMaterial, Transform, Vec3,
 };
 
-use super::super::super::common::Name;
+use super::super::super::components::Name;
 use super::super::camera::start_up::{create_camera_3d_bundle, create_player_camera_component};
 use super::components::PlayerCharacter;
 
