@@ -153,8 +153,8 @@ fn calculate_displacement_vector(
     let speed = 10.0;
     let x_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX);
     let y_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY);
-    // Get the axis information from the gamepad and move the
-    // player's entity based on the axis info.
+    // Get the left stick axis information from the gamepad and calculate the
+    // displacement to apply.
     if let (Some(x_axis), Some(y_axis)) = (axes.get(x_axis), axes.get(y_axis)) {
         let x_displacement = speed * y_axis * timer.delta_seconds();
         let z_displacement = speed * x_axis * timer.delta_seconds();
