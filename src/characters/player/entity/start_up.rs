@@ -4,7 +4,7 @@ use bevy::prelude::{
 };
 
 use super::super::super::common::Name;
-use super::super::camera::start_up::create_camera_init_bundle;
+use super::super::camera::start_up::{create_camera_3d_bundle, create_player_camera_component};
 use super::components::PlayerCharacter;
 
 /// A component bundle used to initialize a player character.
@@ -62,10 +62,10 @@ pub fn generate_add_player_system(
         let player_init_bundle =
             create_player_init_bundle(player_id, spawn_location, &mut meshes, &mut materials);
         let player_entity = commands.spawn(player_init_bundle).id();
-        let camera_init_bundle = create_camera_init_bundle(player_id, spawn_location);
-        let camera_entity = commands.spawn(camera_init_bundle).id();
-        commands
-            .entity(player_entity)
-            .push_children(&[camera_entity]);
+        let player_camera_component = create_player_camera_component(player_id);
+        let mut camera_entity_commands = commands.spawn(player_camera_component);
+        camera_entity_commands.set_parent(player_entity);
+        let camera_3d_bundle = create_camera_3d_bundle();
+        camera_entity_commands.insert(camera_3d_bundle);
     }
 }
