@@ -9,7 +9,8 @@ use bevy::{
     },
 };
 
-use super::super::control::{get_gamepad, get_player_entity_and_gamepad_id, Controller};
+use super::super::camera::components::PlayerCamera;
+use super::super::control::{player_gamepad_movement_wrapper, Controller, PlayerInfo};
 use super::components::PlayerCharacter;
 
 /// A function that is run on GamepadConnection.Connected GamepadConnectionEvents to
@@ -118,6 +119,21 @@ fn calculate_displacement_vector(
     return displacement_vector;
 }
 
+fn move_entity(
+    axes: Res<Axis<GamepadAxis>>,
+    mut transforms: Query<&mut Transform>,
+    timer: Res<Time>,
+    player_info: PlayerInfo,
+    gamepad: Gamepad,
+    _camera_entity: Entity,
+) {
+    if let Some(displacement) = calculate_displacement_vector(gamepad, axes, timer) {
+        if let Ok(mut player_transform) = transforms.get_mut(player_info.entity) {
+            player_transform.translation += displacement;
+        }
+    }
+}
+
 /// Generates a system to move a player entity's transform based on the input from the
 /// player's gamepad's left stick.
 pub fn generate_move_player_system(
@@ -126,27 +142,11 @@ pub fn generate_move_player_system(
     Res<Gamepads>,
     Res<Axis<GamepadAxis>>,
     Query<(Entity, &PlayerCharacter, &Controller)>,
+    Query<(Entity, &PlayerCamera)>,
     Query<&mut Transform>,
     Res<Time>,
 ) {
-    // This closure is the system that is generated.
-    move |gamepads: Res<Gamepads>,
-          axes: Res<Axis<GamepadAxis>>,
-          players_with_controller: Query<(Entity, &PlayerCharacter, &Controller)>,
-          mut transforms: Query<&mut Transform>,
-          timer: Res<Time>| {
-        if let Some(player_info) =
-            get_player_entity_and_gamepad_id(player_id, players_with_controller)
-        {
-            if let Some(gamepad) = get_gamepad(player_info.gamepad_id, gamepads) {
-                if let Some(displacement) = calculate_displacement_vector(gamepad, axes, timer) {
-                    if let Ok(mut player_transform) = transforms.get_mut(player_info.entity) {
-                        player_transform.translation += displacement;
-                    }
-                }
-            }
-        }
-    }
+    return player_gamepad_movement_wrapper(player_id, move_entity);
 }
 
 // fn gamepad_events(
