@@ -9,6 +9,8 @@ use super::super::control::{player_gamepad_movement_wrapper, Controller, PlayerI
 use super::super::entity::components::PlayerCharacter;
 use super::components::PlayerCamera;
 
+/// Uses the gamepad right stick axes information to calculate a rotation. This rotation
+/// is a percentage of a radian based on the rotation speed and the axes value.
 fn calculate_rotation(
     gamepad: Gamepad,
     axes: Res<Axis<GamepadAxis>>,
@@ -28,6 +30,9 @@ fn calculate_rotation(
     return rotation;
 }
 
+/// Move the camera entity around, and looking at, the center. The movement
+/// is based on the the gamepad axes information. This implements the player_info
+/// parameter as required by the wrapper function but does not use it.
 fn move_camera(
     axes: Res<Axis<GamepadAxis>>,
     mut transforms: Query<&mut Transform>,
@@ -51,6 +56,8 @@ fn move_camera(
     }
 }
 
+/// Generate a system to move the player camera based on the right stick movement of
+/// the gamepad.
 pub fn generate_move_player_camera_system(
     player_id: u8,
 ) -> impl Fn(

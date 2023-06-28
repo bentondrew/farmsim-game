@@ -98,8 +98,8 @@ pub fn gamepad_connection_events(
     }
 }
 
-/// Gets the axis state of the gamepad and uses it to calculate a displacement
-/// vector for the frame.
+/// Gets the axis state of the left stick of the gamepad and uses it to calculate a
+/// displacement vector for the frame.
 fn calculate_displacement_vector(
     gamepad: Gamepad,
     axes: Res<Axis<GamepadAxis>>,
@@ -119,6 +119,8 @@ fn calculate_displacement_vector(
     return displacement_vector;
 }
 
+/// Calculate a displacement based on the controller axes and apply that to the player
+/// character entity.
 fn move_entity(
     axes: Res<Axis<GamepadAxis>>,
     mut transforms: Query<&mut Transform>,
