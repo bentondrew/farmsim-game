@@ -5,25 +5,11 @@ use bevy::prelude::{
     Transform, Vec3,
 };
 
-use super::super::control::{get_gamepad, get_player_entity_and_gamepad_id, Controller};
+use super::super::control::{
+    get_gamepad, get_player_camera_entity, get_player_entity_and_gamepad_id, Controller,
+};
 use super::super::entity::components::PlayerCharacter;
 use super::components::PlayerCamera;
-
-/// Returns the entity for the camera associated with the provide player id..
-pub fn get_player_camera_entity(
-    player_id: u8,
-    player_cameras: Query<(Entity, &PlayerCamera)>,
-) -> Option<Entity> {
-    let mut entity_returned = None;
-    for (camera_entity, player_camera) in player_cameras.iter() {
-        if player_camera.player_id == player_id {
-            entity_returned = Some(camera_entity);
-            // Found the camera associated with the player we want so stop.
-            break;
-        }
-    }
-    return entity_returned;
-}
 
 fn calculate_rotation(
     gamepad: Gamepad,
