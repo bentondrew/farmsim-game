@@ -9,7 +9,8 @@ use bevy::{
     },
 };
 
-use super::super::control::{get_gamepad, get_player_entity_and_gamepad_id, Controller};
+use super::super::camera::components::PlayerCamera;
+use super::super::control::{player_gamepad_movement_wrapper, Controller, PlayerInfo};
 use super::components::PlayerCharacter;
 
 /// A function that is run on GamepadConnection.Connected GamepadConnectionEvents to
@@ -97,25 +98,73 @@ pub fn gamepad_connection_events(
     }
 }
 
-/// Gets the axis state of the gamepad and uses it to calculate a displacement
-/// vector for the frame.
+/// Gets the axis state of the left stick of the gamepad and uses it to calculate a
+/// displacement vector for the frame. This displacement vector is relative to the
+/// camera forward vector.
 fn calculate_displacement_vector(
     gamepad: Gamepad,
     axes: Res<Axis<GamepadAxis>>,
+    camera_transform: &Transform,
+    player_transform: &Transform,
     timer: Res<Time>,
 ) -> Option<Vec3> {
     let mut displacement_vector = None;
     let speed = 10.0;
-    let x_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX);
-    let y_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY);
-    // Get the left stick axis information from the gamepad and calculate the
-    // displacement to apply.
-    if let (Some(x_axis), Some(y_axis)) = (axes.get(x_axis), axes.get(y_axis)) {
-        let x_displacement = speed * y_axis * timer.delta_seconds();
-        let z_displacement = speed * x_axis * timer.delta_seconds();
-        displacement_vector = Some(Vec3::new(x_displacement, 0.0, z_displacement));
+    let horizontal_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickX);
+    let forward_axis = GamepadAxis::new(gamepad, GamepadAxisType::LeftStickY);
+    if let (Some(horizontal_input), Some(forward_input)) =
+        (axes.get(horizontal_axis), axes.get(forward_axis))
+    {
+        let right = camera_transform.right();
+        // The camera forward cannot be used here as that means the player character
+        // will go forward in the direction the camera is pointing. This means that the
+        // player character is not constrained to the "ground". To constrain the
+        // player character to the same plane it was on before by using using its up
+        // and aligning the camera right with the player right.
+        // This generates a z axis where the positive direction is toward the camera.
+        let forward = right.cross(player_transform.up());
+        let right_displacement = right * horizontal_input;
+        // The desired behavior is that up on the left stick moves the player character
+        // entity away from the camera so we need to flip the direction by using the
+        // negative of the left stick Y as axis.
+        let forward_displacement = forward * forward_input;
+        let mut combined_displacement = right_displacement + forward_displacement * -1.0;
+        combined_displacement *= speed;
+        combined_displacement.clamp_length_max(speed);
+        combined_displacement *= timer.delta_seconds();
+        displacement_vector = Some(combined_displacement);
     }
     return displacement_vector;
+}
+
+/// Calculate a displacement based on the controller axes and apply that to the player
+/// character entity.
+fn move_entity(
+    axes: Res<Axis<GamepadAxis>>,
+    mut transforms: Query<&mut Transform>,
+    timer: Res<Time>,
+    player_info: PlayerInfo,
+    gamepad: Gamepad,
+    camera_entity: Entity,
+) {
+    let mut displacement = None;
+    if let Ok(camera_transform) = transforms.get(camera_entity) {
+        if let Ok(player_transform) = transforms.get(player_info.entity) {
+            displacement = calculate_displacement_vector(
+                gamepad,
+                axes,
+                &camera_transform,
+                &player_transform,
+                timer,
+            )
+        }
+    }
+    if let Ok(mut player_transform) = transforms.get_mut(player_info.entity) {
+        match displacement {
+            Some(vec) => player_transform.translation += vec,
+            None => (),
+        }
+    }
 }
 
 /// Generates a system to move a player entity's transform based on the input from the
@@ -126,27 +175,11 @@ pub fn generate_move_player_system(
     Res<Gamepads>,
     Res<Axis<GamepadAxis>>,
     Query<(Entity, &PlayerCharacter, &Controller)>,
+    Query<(Entity, &PlayerCamera)>,
     Query<&mut Transform>,
     Res<Time>,
 ) {
-    // This closure is the system that is generated.
-    move |gamepads: Res<Gamepads>,
-          axes: Res<Axis<GamepadAxis>>,
-          players_with_controller: Query<(Entity, &PlayerCharacter, &Controller)>,
-          mut transforms: Query<&mut Transform>,
-          timer: Res<Time>| {
-        if let Some(player_info) =
-            get_player_entity_and_gamepad_id(player_id, players_with_controller)
-        {
-            if let Some(gamepad) = get_gamepad(player_info.gamepad_id, gamepads) {
-                if let Some(displacement) = calculate_displacement_vector(gamepad, axes, timer) {
-                    if let Ok(mut player_transform) = transforms.get_mut(player_info.entity) {
-                        player_transform.translation += displacement;
-                    }
-                }
-            }
-        }
-    }
+    return player_gamepad_movement_wrapper(player_id, move_entity);
 }
 
 // fn gamepad_events(
