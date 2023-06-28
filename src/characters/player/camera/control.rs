@@ -67,10 +67,8 @@ pub fn generate_move_player_camera_system(
                 if let Some(camera_entity) = get_player_camera_entity(player_id, player_cameras) {
                     if let Some(rotation) = calculate_rotation(gamepad, axes, timer) {
                         if let Ok(mut camera_transform) = transforms.get_mut(camera_entity) {
-                            // Update the rotation information
-                            camera_transform.rotation = rotation;
                             // Apply the rotation to the vector
-                            let rotation_matrix = Mat3::from_quat(camera_transform.rotation);
+                            let rotation_matrix = Mat3::from_quat(rotation);
                             camera_transform.translation =
                                 rotation_matrix.mul_vec3(camera_transform.translation);
                             // Now look at center
