@@ -5,9 +5,7 @@ use bevy::prelude::{
     Transform, Vec3,
 };
 
-use super::super::control::{
-    get_gamepad, get_player_camera_entity, get_player_entity_and_gamepad_id, Controller,
-};
+use super::super::control::{player_gamepad_movement_wrapper, Controller, PlayerInfo};
 use super::super::entity::components::PlayerCharacter;
 use super::components::PlayerCamera;
 
@@ -30,6 +28,29 @@ fn calculate_rotation(
     return rotation;
 }
 
+fn move_camera(
+    axes: Res<Axis<GamepadAxis>>,
+    mut transforms: Query<&mut Transform>,
+    timer: Res<Time>,
+    _player_info: PlayerInfo,
+    gamepad: Gamepad,
+    camera_entity: Entity,
+) {
+    if let Some(rotation) = calculate_rotation(gamepad, axes, timer) {
+        if let Ok(mut camera_transform) = transforms.get_mut(camera_entity) {
+            // Apply the rotation to the vector
+            let rotation_matrix = Mat3::from_quat(rotation);
+            camera_transform.translation = rotation_matrix.mul_vec3(camera_transform.translation);
+            // Now look at center
+            let refocused_transform =
+                camera_transform.looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y);
+            camera_transform.translation = refocused_transform.translation;
+            camera_transform.rotation = refocused_transform.rotation;
+            camera_transform.scale = refocused_transform.scale;
+        }
+    }
+}
+
 pub fn generate_move_player_camera_system(
     player_id: u8,
 ) -> impl Fn(
@@ -40,33 +61,5 @@ pub fn generate_move_player_camera_system(
     Query<&mut Transform>,
     Res<Time>,
 ) {
-    move |gamepads: Res<Gamepads>,
-          axes: Res<Axis<GamepadAxis>>,
-          players_with_controller: Query<(Entity, &PlayerCharacter, &Controller)>,
-          player_cameras: Query<(Entity, &PlayerCamera)>,
-          mut transforms: Query<&mut Transform>,
-          timer: Res<Time>| {
-        if let Some(player_info) =
-            get_player_entity_and_gamepad_id(player_id, players_with_controller)
-        {
-            if let Some(gamepad) = get_gamepad(player_info.gamepad_id, gamepads) {
-                if let Some(camera_entity) = get_player_camera_entity(player_id, player_cameras) {
-                    if let Some(rotation) = calculate_rotation(gamepad, axes, timer) {
-                        if let Ok(mut camera_transform) = transforms.get_mut(camera_entity) {
-                            // Apply the rotation to the vector
-                            let rotation_matrix = Mat3::from_quat(rotation);
-                            camera_transform.translation =
-                                rotation_matrix.mul_vec3(camera_transform.translation);
-                            // Now look at center
-                            let refocused_transform =
-                                camera_transform.looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y);
-                            camera_transform.translation = refocused_transform.translation;
-                            camera_transform.rotation = refocused_transform.rotation;
-                            camera_transform.scale = refocused_transform.scale;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    return player_gamepad_movement_wrapper(player_id, move_camera);
 }
